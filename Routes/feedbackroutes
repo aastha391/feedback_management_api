@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-const Feedback = require('../model/feedbackSchema');
-const asyncHandler = require('../util/asynchandler');
+const Feedback = require('../models/feedbackSchema');
+const asyncHandler = require('../util/asyncHandler');
 
 router.post('/api/feedback', asyncHandler(async (req, res) => {
     const { studentName, courseName, message, rating } = req.body;
@@ -62,17 +62,16 @@ router.get('/api/feedback', asyncHandler(async (req, res) => {
 router.patch('/api/feedback/:id', asyncHandler(async (req, res) => {
     const { status } = req.body;
 
-    if (!status || (status !== 'Pending' && status !== 'Reviewed')) {
+    if (!status) {
         return res.status(400).json({
             success: false,
-            message: 'Status must be Pending or Reviewed'
+            message: 'Status is required'
         });
     }
 
     const updatedFeedback = await Feedback.findByIdAndUpdate(
         req.params.id,
-        { status: status },
-        { new: true, runValidators: true }
+        { status: status }
     );
 
     if (!updatedFeedback) {
@@ -84,7 +83,7 @@ router.patch('/api/feedback/:id', asyncHandler(async (req, res) => {
 
     res.status(200).json({
         success: true,
-        message: 'Feedback status updated successfully',
+        message: 'Status updated',
         feedback: updatedFeedback
     });
 }));
