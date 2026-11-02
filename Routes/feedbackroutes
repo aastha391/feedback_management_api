@@ -1,0 +1,92 @@
+const express = require('express');
+const router = express.Router();
+
+const Feedback = require('../model/feedbackSchema');
+const asyncHandler = require('../util/asynchandler');
+
+router.post('/api/feedback', asyncHandler(async (req, res) => {
+    const { studentName, courseName, message, rating } = req.body;
+
+    if (!studentName|| !courseName ||!message ||!rating) {
+        return res.status(400).json({
+            success: false,
+            message: 'Required fields'
+        });
+    }
+
+    if (parseInt(rating) < 1 || parseInt(rating) > 5) {
+        return res.status(400).json({
+            success: false,
+            message: 'Rating must be between 1 and 5'
+        });
+    }
+
+    const newFeedback = await Feedback.create({
+        studentName: studentName.trim(),
+        courseName: courseName.trim(),
+        message: message.trim(),
+        rating: parseIint(rating)
+    });
+
+    res.status(201).json({
+        success: true,
+        message: 'Feedback submitted',
+        feedback: newFeedback
+    });
+}));
+
+router.get('/api/feedback', asyncHandler(async (req, res) => {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+
+    const sanitizePage = page < 1 ? 1 : page;
+    const sanitizeLimit = limit < 1 ? 10 : limit;
+
+    const skip = (sanitizePage - 1) * sanitizeLimit;
+
+    const feedback = await Feedback.find()
+        .skip(skip)
+        .limit(sanitizeLimit);
+
+    const totalRecords = await Feedback.countDocuments();
+
+    res.status(200).json({
+        success: true,
+        currentPage: sanitizePage,
+        totalRecords: totalRecords,
+        data: feedback
+    });
+}));
+
+
+router.patch('/api/feedback/:id', asyncHandler(async (req, res) => {
+    const { status } = req.body;
+
+    if (!status || (status !== 'Pending' && status !== 'Reviewed')) {
+        return res.status(400).json({
+            success: false,
+            message: 'Status must be Pending or Reviewed'
+        });
+    }
+
+    const updatedFeedback = await Feedback.findByIdAndUpdate(
+        req.params.id,
+        { status: status },
+        { new: true, runValidators: true }
+    );
+
+    if (!updatedFeedback) {
+        return res.status(404).json({
+            success: false,
+            message: 'Feedback not found'
+        });
+    }
+
+    res.status(200).json({
+        success: true,
+        message: 'Feedback status updated successfully',
+        feedback: updatedFeedback
+    });
+}));
+
+module.exports = router;
