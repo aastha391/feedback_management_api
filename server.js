@@ -6,7 +6,7 @@ app.use(express.json());
 app.use(feedbackRoute);
 const mongoose=require('mongoose')
 
-mongoose.connect('mongodb+srv://aasthasheoran147_db_user:aastha0813sheoran@aastha-cluster.y2p9gzk.mongodb.net/?appName=aastha-cluster').then(()=>{
+mongoose.connect('').then(()=>{
     console.log("MongoDB Connected")
 }).catch((error)=>{
     console.log("MongoDb Not Connected")
